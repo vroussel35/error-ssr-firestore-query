@@ -13,13 +13,13 @@ import { FirebaseService } from './firebase.service';
 export class AppComponent implements OnInit {
 
   constructor(
-    private firebaseService: FirebaseService
+    private firebaseService: FirebaseService,
   ) {}
 
   public ngOnInit() {
 
     firebase.firestore().collection('homepages_public').doc('32a7hGeVfgwJ0v2eEBw3').get().then((result) => {
-      console.log(result.id);
+      console.log('Displaying result: ', result.id);
     });
 
   }

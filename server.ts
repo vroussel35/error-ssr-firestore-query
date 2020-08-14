@@ -2,41 +2,48 @@ import 'zone.js/dist/zone-node';
 
 import { ngExpressEngine } from '@nguniversal/express-engine';
 import * as express from 'express';
+
 import { join } from 'path';
 
 import { APP_BASE_HREF } from '@angular/common';
 import { existsSync } from 'fs';
 import { AppServerModule } from './src/main.server';
 
+const timeoutMin = 15; // 15 min timeout
+
 // The Express app is exported so that it can be used by serverless Functions.
-export function app() {
-  const server = express();
+export function createApp() {
+
+  const app = express();
+
   const distFolder = join(process.cwd(), 'dist/browser');
   const indexHtml = existsSync(join(distFolder, 'index.original.html')) ? 'index.original.html' : 'index';
 
   // Our Universal express-engine (found @ https://github.com/angular/universal/tree/master/modules/express-engine)
-  server.engine('html', ngExpressEngine({
+  app.engine('html', ngExpressEngine({
     bootstrap: AppServerModule,
   }));
 
-  server.set('view engine', 'html');
-  server.set('views', distFolder);
+  app.set('view engine', 'html');
+  app.set('views', distFolder);
 
   // TODO: implement data requests securely
-  server.get('/api/**', (req, res) => {
+  app.get('/api/**', (req, res) => {
     res.status(404).send('data requests are not yet supported');
   });
 
   // Serve static files from /browser
-  server.get('*.*', express.static(distFolder, {
+  app.get('*.*', express.static(distFolder, {
     maxAge: '1y',
   }));
 
   // All regular routes use the Universal engine
-  server.get('*', (req, res) => {
+  app.get('*', (req, res) => {
+
+    const dateBeginCall = new Date().toLocaleString();
 
     // All regular routes use the Universal engine
-    console.log(new Date().toLocaleString(), 'Begin call req.url => ', req.url);
+    console.log(dateBeginCall, 'Begin call req.url =>', req.url);
 
     res.render(indexHtml, { req, providers: [{ provide: APP_BASE_HREF, useValue: req.baseUrl }], res }, (error, html) => {
 
@@ -49,7 +56,7 @@ export function app() {
         res.status(500).send(error);
       }
 
-      console.log(new Date().toLocaleString(), 'End call req.url => ', req.url);
+      console.log(new Date().toLocaleString(), 'End call req.url =>', req.url, '(started ' + dateBeginCall + ')');
 
     });
 
@@ -60,17 +67,21 @@ export function app() {
   //   res.render(indexHtml, { req, providers: [{ provide: APP_BASE_HREF, useValue: req.baseUrl }] });
   // });
 
-  return server;
+  return app;
 }
 
 function run() {
+
   const port = process.env.PORT || 4000;
 
   // Start up the Node server
-  const server = app();
-  server.listen(port, () => {
+  const appExpress = createApp();
+  const server = appExpress.listen(port, () => {
     console.log(`Node Express server listening on http://localhost:${port}`);
   });
+
+  server.setTimeout(1000 * 90 * timeoutMin);
+
 }
 
 // Webpack will replace 'require' with '__webpack_require__'

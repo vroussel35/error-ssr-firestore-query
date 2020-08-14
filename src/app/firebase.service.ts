@@ -3,42 +3,43 @@ import { Injectable } from '@angular/core';
 import * as firebase from 'firebase';
 import 'firebase/firestore';
 
-// import { AsyncApiCallHelperService } from './async-api-call-helper.service';
-
 @Injectable({
-    providedIn: 'root',
+  providedIn: 'root',
 })
 export class FirebaseService {
 
-    // app: firebase.app.App;
-    public loaded: boolean;
+  private loaded = false;
 
-    constructor(
-      // private processor: AsyncApiCallHelperService
-    ) {
+  constructor() {
 
-      console.log('in constructor FirebaseService');
+    try {
 
-      if (this.loaded !== true) {
+      console.log('Calling singleton FirebaseService...');
+
+      if (!this.loaded) {
 
         this.loaded = true;
 
+        firebase.setLogLevel('debug');
+
         firebase.initializeApp({
           apiKey: 'AIzaSyBxBfTbk6h-doGaNLxUxX5TkyqSUBU1TMI',
+          appId: '1:559901152914:web:96bdd4dd5d41d47ffb784b',
           authDomain: 'alltrippers-eu.firebaseapp.com',
           databaseURL: 'https://alltrippers-eu.firebaseio.com',
+          measurementId: 'G-VH956QF7KN',
+          messagingSenderId: '559901152914',
           projectId: 'alltrippers-eu',
           storageBucket: 'alltrippers-eu.appspot.com',
-          messagingSenderId: '559901152914',
-          appId: '1:559901152914:web:96bdd4dd5d41d47ffb784b',
-          measurementId: 'G-VH956QF7KN',
         });
 
       }
 
+    } catch (error) {
+      // console.error(new Date().toLocaleString(), error);
+      console.log(new Date().toLocaleString(), 'Firebase already initialized. Skip initialization.');
     }
 
-    public execute() {
-      return firebase.firestore().collection('homepages_public').doc('32a7hGeVfgwJ0v2eEBw3').get();
-    }
+  }
+
 }
